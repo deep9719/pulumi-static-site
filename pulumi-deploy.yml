@@ -1,0 +1,49 @@
+name: Pulumi Deployment
+on: [push, pull_request]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Use current Node.js LTS version
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # Clean install with latest stable versions
+      - run: |
+          rm -rf node_modules package-lock.json
+          npm install --legacy-peer-deps
+          npm install @pulumi/pulumi@latest
+          npm install @pulumi/aws@latest
+
+      # Install latest Pulumi CLI
+      - name: Install Pulumi CLI
+        uses: pulumi/action-install-pulumi-cli@v2
+        with:
+          pulumi-version: 'latest'
+          install-only: true
+
+      # AWS configuration
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::515880899753:role/GithubActionRole
+          aws-region: us-east-1
+
+      # Run Pulumi with modern configuration
+      - name: Run Pulumi Preview
+        run: |
+          export PULUMI_SKIP_UPDATE_CHECK=true
+          pulumi preview --stack dev --non-interactive
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
