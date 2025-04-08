@@ -1,0 +1,10 @@
+name: static-site
+description: pulumi lab8
+runtime:
+  name: nodejs
+  options:
+    packagemanager: npm
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-typescript
